@@ -26,6 +26,9 @@ body{background:var(--bg);color:var(--text);font-family:var(--ge);min-height:100
 .music-btn{position:fixed;bottom:22px;right:20px;z-index:100;width:44px;height:44px;border-radius:50%;background:rgba(13,8,32,.9);border:1px solid rgba(155,89,182,.4);display:flex;align-items:center;justify-content:center;cursor:pointer;transition:all .3s;box-shadow:0 4px 15px rgba(0,0,0,.5)}
 .music-btn:hover{border-color:var(--gold);background:rgba(155,89,182,.1)}
 .music-btn svg{width:20px;height:20px;fill:var(--gold)}
+.input.locked{background:rgba(155,89,182,.06)!important;border-color:rgba(155,89,182,.4)!important;color:var(--gold-l)!important;cursor:not-allowed!important;opacity:.85}
+.lock-badge{display:inline-flex;align-items:center;gap:5px;font-size:11px;color:var(--gold-d);float:left;margin-top:2px}
+.lock-badge svg{width:12px;height:12px;fill:var(--gold-d)}
 .qr-btn-float{position:fixed;bottom:22px;left:20px;z-index:100;display:none;align-items:center;gap:8px;padding:10px 16px;background:rgba(13,8,32,.9);border:1px solid rgba(155,89,182,.4);border-radius:30px;color:var(--gold);font-family:var(--ge);font-size:13px;cursor:pointer;transition:all .3s;box-shadow:0 4px 15px rgba(0,0,0,.5)}
 .qr-btn-float:hover{border-color:var(--gold);background:rgba(155,89,182,.1)}
 .qr-btn-float svg{width:18px;height:18px;fill:var(--gold)}
@@ -149,6 +152,31 @@ body{background:var(--bg);color:var(--text);font-family:var(--ge);min-height:100
 </head>
 <body>
 
+<!-- ══ شاشة إدخال رقم الطلب ══ -->
+<div id="orderScreen" style="display:none;position:fixed;inset:0;z-index:9999;background:#0D0612;flex-direction:column;align-items:center;justify-content:center;padding:30px 20px;gap:20px;text-align:center">
+  <div style="font-size:50px">⚜️</div>
+  <div style="font-family:'Amiri',serif;font-size:36px;font-weight:700;background:linear-gradient(180deg,#F5EEF8,#9B59B6,#6C3483);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text">لمسة</div>
+  <div style="font-size:12px;color:#9B59B6;letter-spacing:4px;opacity:.7">LAMST DESIGN · ROYAL INVITATIONS</div>
+  <div style="width:100%;max-width:360px;background:rgba(13,8,32,.8);border:1px solid rgba(155,89,182,.2);border-radius:8px;padding:28px 22px;margin-top:8px">
+    <p style="font-size:15px;color:#E8DCC0;margin-bottom:6px;line-height:1.8">أدخل رقم طلبك من سلة<br><span style="font-size:12px;color:#6B5A3F">ستجده في إيميل تأكيد الطلب</span></p>
+    <input id="orderInput" type="number" inputmode="numeric"
+      style="width:100%;background:rgba(0,0,0,.5);border:1px solid rgba(155,89,182,.3);color:#E8DCC0;font-size:22px;padding:14px;text-align:center;border-radius:4px;outline:none;margin:16px 0;letter-spacing:3px;direction:ltr"
+      placeholder="260463882"
+      onkeydown="if(event.key==='Enter')verifyOrder()">
+    <div id="orderErr" style="display:none;color:#E07070;font-size:13px;margin-bottom:12px"></div>
+    <button onclick="verifyOrder()"
+      style="width:100%;padding:14px;background:linear-gradient(135deg,#6C3483,#9B59B6,#D7BDE2,#9B59B6,#6C3483);background-size:200%;color:#0D0612;font-weight:700;font-size:16px;border:none;border-radius:30px;cursor:pointer;font-family:'GE SS Two','Tajawal',sans-serif">
+      ابدأ تصميم دعوتك ✦
+    </button>
+  </div>
+  <div style="font-size:12px;color:#6B5A3F;margin-top:8px">
+    مشكلة؟
+    <a href="https://wa.me/966536213415" style="color:#9B59B6">تواصل مع الدعم</a>
+  </div>
+</div>
+
+<!-- ══ المحتوى الرئيسي ══ -->
+<div id="mainContent">
 <div class="bg">
   <svg viewBox="0 0 1200 1800" xmlns="http://www.w3.org/2000/svg">
     <text x="50"  y="200"  font-family="Amiri,serif" font-size="100" fill="#9B59B6" transform="rotate(-12 50 200)">بارك الله لهما</text>
@@ -199,7 +227,16 @@ body{background:var(--bg);color:var(--text);font-family:var(--ge);min-height:100
     <div class="divider"><div class="line"></div><div class="orn">❦</div><div class="line"></div></div>
   </div>
   <div class="card">
-    <div class="field"><label class="field-label">اسم العريس</label><input type="text" id="groomName" class="input" placeholder="مثال: علي بن محمد الشامان"></div>
+    <div class="field">
+      <label class="field-label">
+        اسم العريس
+        <span id="nameLockBadge" class="lock-badge" style="display:none">
+          <svg viewBox="0 0 24 24"><path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm3.1-9H8.9V6c0-1.71 1.39-3.1 3.1-3.1 1.71 0 3.1 1.39 3.1 3.1v2z"/></svg>
+          الأسماء مقفولة • دعوة واحدة لكل طلب
+        </span>
+      </label>
+      <input type="text" id="groomName" class="input" placeholder="مثال: علي بن محمد الشامان">
+    </div>
     <div class="field"><label class="field-label">اسم العروس</label><input type="text" id="brideName" class="input" placeholder="مثال: نورة بنت خالد الشمري"></div>
     <div class="field"><label class="field-label">والد العريس (المُشرّف بالدعوة)</label><input type="text" id="hostName" class="input" placeholder="محمد بن هليل بن علي الشامان"></div>
     <div class="divider"><div class="line"></div><div class="orn">❦</div><div class="line"></div></div>
@@ -265,7 +302,7 @@ body{background:var(--bg);color:var(--text);font-family:var(--ge);min-height:100
     </div>
     <div class="attempts-row">
       <span class="att-text">المحاولات:</span>
-      <div class="dot" id="d1"></div><div class="dot" id="d2"></div><div class="dot" id="d3"></div>
+      <div class="dot" id="d1"></div><div class="dot" id="d2"></div><div class="dot" id="d3"></div><div class="dot" id="d4"></div><div class="dot" id="d5"></div><div class="dot" id="d6"></div>
     </div>
     <div class="remaining">متبقي <span id="remCount">3</span> محاولات مجانية</div>
     <div class="style-lbl">ستايل المخطوطة</div>
@@ -279,15 +316,20 @@ body{background:var(--bg);color:var(--text);font-family:var(--ge);min-height:100
       <div class="empty"><div class="empty-icon">❦</div><div class="empty-text">اضغط زر التوليد<br>لإنشاء المخطوطة</div></div>
     </div>
     <button class="btn" id="genBtn" onclick="generate()">✦ توليد المخطوطة</button>
-    <button class="btn-ghost" id="acceptBtn" style="display:none" onclick="accept()">قبول المخطوطة ومعاينة الدعوة ✓</button>
+    <button class="btn-ghost" id="acceptBtn" style="display:none" onclick="accept()">
+      قبول المخطوطة ومعاينة الدعوة ✓
+      <span id="previewCounter" style="font-size:11px;opacity:.6;margin-right:6px"></span>
+    </button>
     <button class="btn-ghost" onclick="goStep(1)" style="opacity:.5;font-size:13px">← تعديل البيانات</button>
   </div>
   <div class="upgrade" id="upgradeBox" style="display:none">
-    <h3>استنفدت محاولاتك المجانية</h3>
-    <div class="upgrade-desc">احصل على <strong style="color:var(--gold)">3 محاولات إضافية</strong></div>
-    <div class="upgrade-price">15<small> ريال</small></div>
-    <button class="btn" onclick="buyExtra()">شراء 3 محاولات إضافية</button>
-    <button class="btn-ghost" onclick="support()">التواصل مع الدعم 💬</button>
+    <div style="font-size:32px;margin-bottom:8px">⚜️</div>
+    <h3>انتهت محاولات التوليد</h3>
+    <div class="upgrade-desc">تواصل معنا على واتساب للحصول على محاولات إضافية</div>
+    <button class="btn" onclick="support()" style="margin-top:8px">
+      <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor" style="vertical-align:middle;margin-left:6px"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 0C5.373 0 0 5.373 0 12c0 2.091.539 4.074 1.492 5.798L0 24l6.384-1.469A11.94 11.94 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 21.818a9.818 9.818 0 01-5.006-1.369l-.36-.214-3.726.857.886-3.625-.234-.373A9.818 9.818 0 012.182 12C2.182 6.578 6.578 2.182 12 2.182S21.818 6.578 21.818 12 17.422 21.818 12 21.818z"/></svg>
+      تواصل معنا على واتساب
+    </button>
   </div>
 </div>
 
@@ -308,7 +350,7 @@ body{background:var(--bg);color:var(--text);font-family:var(--ge);min-height:100
       <button class="btn-ghost" onclick="shareCard()">📤 مشاركة</button>
       <button class="btn-ghost" onclick="goStep(2)">✦ تعديل المخطوطة</button>
     </div>
-    <button class="btn-ghost danger" onclick="reset()" style="margin-top:14px">بدء دعوة جديدة</button>
+    <!-- زر بدء من جديد محذوف — دعوة واحدة لكل رابط -->
   </div>
 </div>
 </div>
@@ -331,8 +373,56 @@ body{background:var(--bg);color:var(--text);font-family:var(--ge);min-height:100
 <div class="toast" id="toast"></div>
 
 <script>
-const S={groom:'',bride:'',host:'',hijri:'',gregDate:'',gregTime:'',gregDay:'',venue:'',city:'',noPhone:false,style:'royal-gold',used:0,max:3,paid:false,callyUrl:null,qrUrl:null,musicPlaying:false,orderId:'order_'+Date.now()};
 const MONO_BASE='/assets/monograms';
+
+// ══════════════════════════════════════════════════
+// نظام الحماية: إدخال رقم الطلب من سلة
+// ══════════════════════════════════════════════════
+(function initProtection(){
+  // لو محفوظ مسبقاً — يكمل مباشرة
+  const saved = localStorage.getItem('lamst_order');
+  if(saved && saved.length >= 5){
+    return; // مسموح له
+  }
+
+  // إخفاء كل شي وإظهار شاشة إدخال رقم الطلب
+  document.addEventListener('DOMContentLoaded', function(){
+    const screen = document.getElementById('orderScreen');
+    const mainContent = document.getElementById('mainContent');
+    if(screen && mainContent){
+      mainContent.style.display = 'none';
+      screen.style.display = 'flex';
+    }
+  });
+})();
+
+function verifyOrder(){
+  const input = document.getElementById('orderInput').value.trim();
+  const errEl = document.getElementById('orderErr');
+
+  // التحقق: رقم الطلب يجب أن يكون أرقام فقط، 6 خانات على الأقل
+  if(!input || !/^\d{6,12}$/.test(input)){
+    errEl.textContent = '⚠️ رقم الطلب يجب أن يكون بين 6-12 رقم';
+    errEl.style.display = 'block';
+    return;
+  }
+
+  // حفظ في localStorage
+  localStorage.setItem('lamst_order', input);
+
+  // إخفاء شاشة التحقق وإظهار الموقع
+  document.getElementById('orderScreen').style.display = 'none';
+  document.getElementById('mainContent').style.display = 'block';
+
+  // تحديث الـ orderId في الـ state
+  S.orderId = input;
+}
+
+// نظام مرات المعاينة
+const _previewsUsed = parseInt(localStorage.getItem('lamst_previews')||'0');
+const _callyUrlSaved = localStorage.getItem('lamst_cally')||null;
+
+const S={groom:'',bride:'',host:'',hijri:'',gregDate:'',gregTime:'',gregDay:'',venue:'',city:'',noPhone:false,style:'royal-gold',used:0,max:6,paid:false,callyUrl:_callyUrlSaved,qrUrl:null,musicPlaying:false,orderId:localStorage.getItem('lamst_order')||'guest',previewsUsed:_previewsUsed,maxPreviews:3};
 
 // ── Particles ──
 (function(){const c=document.getElementById('particles');for(let i=0;i<30;i++){const p=document.createElement('div');p.className='particle';p.style.left=Math.random()*100+'%';p.style.setProperty('--dur',(6+Math.random()*10)+'s');p.style.setProperty('--x',(Math.random()*60-30)+'px');p.style.animationDelay=Math.random()*8+'s';c.appendChild(p);}})();
@@ -403,6 +493,7 @@ document.addEventListener('click',e=>{if(!e.target.closest('#hijriDate')&&!e.tar
 // ── QR inline ──
 let qrTimer=null;
 function handleQRInput(val){
+  S.mapsUrl = val;
   clearTimeout(qrTimer);
   const wrap=document.getElementById('qrInlineWrap');
   if(!val||val.length<10){wrap.style.display='none';S.qrUrl=null;return;}
@@ -437,19 +528,104 @@ function updateMono(){
   document.getElementById('monoSep').innerHTML=`<img src="${MONO_BASE}/${dir}/separator.png" alt="و" style="max-width:44px;max-height:60px;object-fit:contain" onerror="this.outerHTML='<span class=\\'fb\\' style=\\'font-size:26px;color:var(--gold-d)\\'>و</span>'">`;
   document.getElementById('monoB').innerHTML=`<img src="${MONO_BASE}/${dir}/${c2}.png" alt="${c2}" style="max-width:110px;max-height:65px;object-fit:contain" onerror="this.outerHTML='<span class=\\'fb\\'>${c2}</span>'">`;
 }
-function selStyle(el,name){document.querySelectorAll('.style-card').forEach(c=>c.classList.remove('sel'));el.classList.add('sel');S.style=name;updateMono();}
+function selStyle(el,name){document.querySelectorAll('.style-card').forEach(c=>c.classList.remove('sel'));el.classList.add('sel');S.style=name;updateMono();saveData();}
 
 // ── Attempts ──
+function updatePreviewCounter(){
+  const counter = document.getElementById('previewCounter');
+  if(counter){
+    const rem = S.maxPreviews - S.previewsUsed;
+    if(rem <= 0) counter.textContent = '(انتهت مرات التعديل)';
+    else counter.textContent = `(متبقي ${rem} من ${S.maxPreviews})`;
+  }
+}
+
 function updateAtt(){for(let i=1;i<=S.max;i++){const d=document.getElementById('d'+i);if(d)d.classList.toggle('used',i<=S.used);}const rem=S.max-S.used;document.getElementById('remCount').textContent=Math.max(0,rem);const btn=document.getElementById('genBtn'),upg=document.getElementById('upgradeBox');if(rem<=0&&!S.paid){btn.disabled=true;upg.style.display='block';}else{btn.disabled=false;upg.style.display='none';}}
 
+// ── حفظ واسترجاع البيانات من localStorage ──
+function saveData(){
+  localStorage.setItem('lamst_data', JSON.stringify({
+    groom:S.groom, bride:S.bride, host:S.host,
+    hijri:S.hijri, gregDate:S.gregDate, gregTime:S.gregTime, gregDay:S.gregDay,
+    venue:S.venue, city:S.city, noPhone:S.noPhone, style:S.style,
+    used:S.used, mapsUrl:S.mapsUrl||'', qrUrl:S.qrUrl||''
+  }));
+}
+
+function loadData(){
+  try{
+    const raw=localStorage.getItem('lamst_data');
+    if(!raw) return;
+    const d=JSON.parse(raw);
+    Object.assign(S,d);
+    if(d.groom) document.getElementById('groomName').value=d.groom;
+    if(d.bride) document.getElementById('brideName').value=d.bride;
+    if(d.host)  document.getElementById('hostName').value=d.host;
+    if(d.venue) document.getElementById('venueName').value=d.venue;
+    if(d.city)  document.getElementById('venueCity').value=d.city;
+    if(d.hijri) document.getElementById('hijriDate').value=d.hijri+' هـ';
+    if(d.noPhone) document.getElementById('phoneBox').classList.add('checked');
+    if(d.mapsUrl && d.mapsUrl.length>5){
+      document.getElementById('mapsUrlInline').value=d.mapsUrl;
+      if(d.qrUrl){
+        document.getElementById('qrInlineImg').src=d.qrUrl;
+        document.getElementById('qrInlineWrap').style.display='block';
+      }
+    }
+    // استرجاع الستايل
+    if(d.style){
+      document.querySelectorAll('.style-card').forEach(c=>c.classList.remove('sel'));
+      const cards=document.querySelectorAll('.style-card');
+      const idx={'royal-gold':0,'silver-classic':1,'violet-scent':2,'pink-spring':3}[d.style]||0;
+      if(cards[idx]) cards[idx].classList.add('sel');
+    }
+    if(d.used) updateAtt();
+    if(d.groom&&d.bride){
+      document.getElementById('namesDisplay').textContent=d.groom+' و '+d.bride;
+      updateMono();
+      toast('✦ تم استرجاع بياناتك', 3000);
+    }
+    // أعد القفل لو كان مقفولاً من قبل
+    if(localStorage.getItem('lamst_locked')==='1'){
+      setTimeout(lockNames, 100);
+    }
+  }catch(e){console.error(e);}
+}
+
 // ── Step 2 ──
+function lockNames(){
+  // قفل الأسماء الثلاثة بعد البدء
+  ['groomName','brideName','hostName'].forEach(id=>{
+    const el=document.getElementById(id);
+    if(el){
+      el.setAttribute('readonly','true');
+      el.classList.add('locked');
+    }
+  });
+  // إظهار شارة القفل
+  document.getElementById('nameLockBadge').style.display='flex';
+}
+
 function toStep2(){
-  S.groom=document.getElementById('groomName').value.trim();
+  // لو الأسماء مقفولة — استخدم القيم المحفوظة
+  const groomEl=document.getElementById('groomName');
+  const alreadyLocked=groomEl.classList.contains('locked');
+
+  S.groom=groomEl.value.trim();
   S.bride=document.getElementById('brideName').value.trim();
   S.host=document.getElementById('hostName').value.trim();
   S.venue=document.getElementById('venueName').value.trim();
   S.city=document.getElementById('venueCity').value.trim();
+
   if(!S.groom||!S.bride){toast('⚠️ أدخل اسم العريس والعروس');return;}
+
+  // قفل الأسماء عند أول انتقال
+  if(!alreadyLocked){
+    lockNames();
+    localStorage.setItem('lamst_locked','1');
+  }
+
+  saveData();
   document.getElementById('namesDisplay').textContent=S.groom+' و '+S.bride;
   updateMono();goStep(2);
 }
@@ -481,11 +657,51 @@ async function generate(){
     S.callyUrl=canvas.toDataURL('image/png');
     box.innerHTML=`<img src="${S.callyUrl}" alt="مخطوطة">`;
     document.getElementById('acceptBtn').style.display='block';
+    updatePreviewCounter();
     toast('✦ تم توليد المخطوطة');
   }catch(e){console.error(e);toast('⚠️ خطأ');S.used--;updateAtt();}
   document.getElementById('genBtn').disabled=(S.used>=S.max&&!S.paid);
 }
-function accept(){goStep(3);}
+function accept(){
+  // قراءة العداد من localStorage مباشرة (الأكثر موثوقية)
+  const used = parseInt(localStorage.getItem('lamst_previews')||'0');
+  const MAX = 3;
+
+  if(used >= MAX){
+    toast('🔒 انتهت مرات التعديل — تواصل معنا على واتساب', 5000);
+    return;
+  }
+
+  // زيادة العداد وحفظه
+  const newUsed = used + 1;
+  localStorage.setItem('lamst_previews', newUsed);
+  S.previewsUsed = newUsed;
+
+  // تحديث العداد في الزر
+  updatePreviewCounter();
+
+  // تحذير قبل آخر مرة
+  if(newUsed === MAX - 1){
+    setTimeout(()=>toast('⚠️ تنبيه: تبقت لك مرة تعديل واحدة فقط', 4000), 600);
+  }
+
+  // انتقل للمعاينة
+  goStep(3);
+
+  // لو آخر مرة — قفل أزرار التعديل
+  if(newUsed >= MAX){
+    setTimeout(()=>{
+      document.querySelectorAll('#step3 .btn-ghost').forEach(btn=>{
+        if(!btn.classList.contains('danger')){
+          btn.disabled = true;
+          btn.style.opacity = '0.3';
+          btn.style.cursor = 'not-allowed';
+        }
+      });
+      toast('🔒 انتهت مرات التعديل — يمكنك التحميل فقط', 5000);
+    }, 600);
+  }
+}
 
 // ── Canvas Render ──
 async function renderCanvas(){
@@ -632,17 +848,76 @@ function generateQRModal(){
   const val=document.getElementById('mapsModal').value.trim();
   if(!val){toast('⚠️ أدخل رابط الموقع');return;}
   const url=`https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(val)}&color=9B59B6&bgcolor=0D0612&qzone=2&format=png`;
-  S.qrUrl=url;S.mapsUrl=val;
+  S.qrUrl=url;S.mapsUrl=val;saveData();
   document.getElementById('qrModalImg').src=url;document.getElementById('qrModalResult').style.display='block';
   toast('✦ تم توليد الباركود');closeQR();renderCanvas();
 }
 
 // ── Upgrade/Support ──
 function buyExtra(){toast('جاري التحويل لصفحة الدفع...');setTimeout(()=>{S.paid=true;S.max+=3;const row=document.querySelector('.attempts-row');row.querySelectorAll('.dot').forEach(d=>d.remove());for(let i=1;i<=S.max;i++){const d=document.createElement('div');d.className='dot'+(S.used>=i?' used':'');d.id='d'+i;row.appendChild(d);}updateAtt();toast('✦ تمت إضافة 3 محاولات');},1500);}
-function support(){const msg=`السلام عليكم،\nأحتاج مساعدة في دعوة الزفاف\nرقم الطلب: ${S.orderId}`;window.open(`https://wa.me/966536213415?text=${encodeURIComponent(msg)}`,'_blank');}
+function support(){
+  const msg = `السلام عليكم 👋\nأحتاج مساعدة في تصميم دعوة الزفاف\nرقم طلبي: ${S.orderId}`;
+  window.open('https://wa.me/966536213415?text='+encodeURIComponent(msg),'_blank');
+}
 function reset(){if(!confirm('متأكد؟ سيتم مسح كل البيانات.'))return;Object.assign(S,{groom:'',bride:'',host:'',hijri:'',gregDate:'',gregTime:'',gregDay:'',venue:'',city:'',noPhone:false,style:'royal-gold',used:0,max:3,paid:false,callyUrl:null,qrUrl:null});document.getElementById('upgradeBox').style.display='none';document.getElementById('acceptBtn').style.display='none';document.getElementById('qrBtnFloat').style.display='none';document.getElementById('qrInlineWrap').style.display='none';document.getElementById('mapsUrlInline').value='';document.getElementById('resultBox').innerHTML='<div class="empty"><div class="empty-icon">❦</div><div class="empty-text">اضغط زر التوليد</div></div>';updateAtt();goStep(1);}
 
 updateAtt();
+loadData();
+
+// ════════════════════════════════════════
+// حماية المحتوى
+// ════════════════════════════════════════
+
+// 1. منع الضغط بالزر الأيمن
+document.addEventListener('contextmenu', e => e.preventDefault());
+
+// 2. منع سحب الصور
+document.addEventListener('dragstart', e => e.preventDefault());
+
+// 3. منع تحديد النص
+document.addEventListener('selectstart', e => e.preventDefault());
+
+// 4. منع اختصارات لوحة المفاتيح (Save, Print, Inspect)
+document.addEventListener('keydown', e => {
+  // Ctrl+S, Ctrl+U, Ctrl+P, F12, Ctrl+Shift+I, Ctrl+Shift+J
+  if(
+    (e.ctrlKey && ['s','u','p'].includes(e.key.toLowerCase())) ||
+    e.key === 'F12' ||
+    (e.ctrlKey && e.shiftKey && ['i','j','c'].includes(e.key.toLowerCase()))
+  ){
+    e.preventDefault();
+    toast('⚠️ هذا المحتوى محمي بحقوق الملكية', 3000);
+    return false;
+  }
+});
+
+// 5. منع فتح الصور في تبويب جديد — تغيير src لـ canvas بدل URL مباشر
+// الصور في الموقع تُعرض عبر Canvas وليس img src مباشر
+// لذا لا يوجد URL مباشر يمكن فتحه
+
+// 6. طبقة شفافة فوق الصور لمنع السحب والنقر
+document.querySelectorAll('img').forEach(img => {
+  img.style.pointerEvents = 'none';
+  img.setAttribute('draggable', 'false');
+});
+
+// مراقبة الصور الجديدة
+const imgObserver = new MutationObserver(() => {
+  document.querySelectorAll('img:not([draggable="false"])').forEach(img => {
+    img.style.pointerEvents = 'none';
+    img.setAttribute('draggable', 'false');
+  });
+});
+imgObserver.observe(document.body, {childList: true, subtree: true});
+
+// 7. منع Print Screen (تنبيه فقط)
+window.addEventListener('keyup', e => {
+  if(e.key === 'PrintScreen'){
+    toast('⚠️ هذا المحتوى محمي بحقوق الملكية لمسة | Lamst Design', 3000);
+  }
+});
+
 </script>
+</div><!-- /mainContent -->
 </body>
 </html>
